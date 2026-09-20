@@ -1,37 +1,40 @@
-name: Build and test
+name: Deployment pipeline
 
 on:
-	push:
-	pull_request:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
 
 jobs:
-	verify:
-		runs-on: ubuntu-latest
+  deploy-pipeline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
-		steps:
-			- name: Check out repository
-				uses: actions/checkout@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
 
-			- name: Set up Node.js
-				uses: actions/setup-node@v4
-				with:
-					node-version: 22
-					cache: npm
+      - name: Install backend dependencies
+        run: npm ci
 
-			- name: Install backend dependencies
-				run: npm ci
+      - name: Install frontend dependencies
+        run: npm ci --prefix frontend
 
-			- name: Install frontend dependencies
-				run: npm ci --prefix frontend
+      - name: Test backend
+        run: npm test
 
-			- name: Test backend
-				run: npm test
+      - name: Lint frontend
+        run: npm run lint --prefix frontend
 
-			- name: Lint frontend
-				run: npm run lint --prefix frontend
+      - name: Test frontend
+        run: npm test --prefix frontend
 
-			- name: Test frontend
-				run: npm test --prefix frontend
-
-			- name: Build application
-				run: npm run build
+      - name: Build application
+        run: npm run build
